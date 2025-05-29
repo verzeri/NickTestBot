@@ -1,5 +1,6 @@
 import logging
 import random
+import os
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
@@ -47,8 +48,12 @@ async def risposta_normale(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text('Vuoi sentire una barzelletta? Usa il comando /barzelletta!')
 
 def main():
-    # Sostituisci "TUO_TOKEN" con il token fornito da BotFather
-    application = ApplicationBuilder().token('8130808308:AAHBXTliHWQ40c8TV8pqpZCqgIbuOLGYaTU').build()
+    # Ottieni il token dalla variabile d'ambiente
+    token = os.environ.get('TELEGRAM_TOKEN')
+    if not token:
+        raise ValueError("Nessun token Telegram trovato. Imposta la variabile d'ambiente TELEGRAM_TOKEN.")
+    
+    application = ApplicationBuilder().token(token).build()
     
     # Aggiungi i gestori dei comandi
     application.add_handler(CommandHandler("start", start))
