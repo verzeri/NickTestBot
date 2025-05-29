@@ -49,7 +49,7 @@ async def risposta_normale(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     # Ottieni il token dalla variabile d'ambiente
-    token = os.environ.get('TELEGRAM_TOKEN')
+    token = os.environ.get('8130808308:AAHBXTliHWQ40c8TV8pqpZCqgIbuOLGYaTU')
     if not token:
         raise ValueError("Nessun token Telegram trovato. Imposta la variabile d'ambiente TELEGRAM_TOKEN.")
     
