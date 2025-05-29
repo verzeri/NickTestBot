@@ -1,6 +1,8 @@
 import logging
 import random
 import os
+import threading
+from flask import Flask
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
@@ -9,6 +11,9 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
+
+# Crea app Flask per mantenere Render attivo
+app = Flask(__name__)
 
 # Lista di barzellette
 barzellette = [
@@ -47,12 +52,23 @@ async def risposta_normale(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text('Vuoi sentire una barzelletta? Usa il comando /barzelletta!')
 
-def main():
-    # Ottieni il token dalla variabile d'ambiente
-    token = os.environ.get('8130808308:AAHBXTliHWQ40c8TV8pqpZCqgIbuOLGYaTU')
-    if not token:
-        raise ValueError("Nessun token Telegram trovato. Imposta la variabile d'ambiente TELEGRAM_TOKEN.")
+# Funzione per avviare il bot in un thread separato
+def run_bot():
+    # Ottieni il token dalla variabile d'ambiente con metodi alternativi
+    token = os.environ.get('TELEGRAM_TOKEN')
+    print(f"Variabili d'ambiente disponibili: {list(os.environ.keys())}")
+    print(f"Token trovato: {'Sì' if token else 'No'}")
     
+    if not token:
+        # Come fallback, prova a cercare il token in altri modi
+        token = os.getenv('TELEGRAM_TOKEN')
+        print(f"Token trovato con getenv: {'Sì' if token else 'No'}")
+        
+        # Se ancora non trovato, solleva un errore
+        if not token:
+            raise ValueError("Nessun token Telegram trovato. Imposta la variabile d'ambiente TELEGRAM_TOKEN.")
+    
+    # Crea e configura l'applicazione Telegram
     application = ApplicationBuilder().token(token).build()
     
     # Aggiungi i gestori dei comandi
@@ -67,5 +83,22 @@ def main():
     print("Bot delle barzellette avviato!")
     application.run_polling()
 
+# Rotta principale per il web server
+@app.route('/')
+def home():
+    return "Bot delle barzellette attivo!"
+
+# Rotta per verificare lo stato
+@app.route('/status')
+def status():
+    return {"status": "online", "message": "Bot delle barzellette è in esecuzione"}
+
 if __name__ == '__main__':
-    main()
+    # Avvia il bot in un thread separato
+    bot_thread = threading.Thread(target=run_bot)
+    bot_thread.daemon = True  # Il thread terminerà quando il programma principale termina
+    bot_thread.start()
+    
+    # Avvia il server web Flask - Per Render: usa PORT se disponibile, altrimenti 5000
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
